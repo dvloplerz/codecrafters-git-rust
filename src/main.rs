@@ -25,15 +25,13 @@ fn main() -> anyhow::Result<()> {
                 if file_location.exists() {
                     ZlibDecoder::new(File::open(file_location)?)
                         .read_to_string(&mut raw_content)?;
-                    let prettyfy_content = raw_content
-                        .split_once("\0")
-                        .unwrap()
-                        .1
-                        .trim_end()
-                        .trim_end();
+                    let prettyfy_content = raw_content.split_once("\0").unwrap().1;
                     print!("{}", prettyfy_content.trim_end())
                 };
             }
+        }
+        "hash-object" => {
+            dbg!("Hash object!")
         }
         _ => {
             println!("unknown command: {}", args[1])
