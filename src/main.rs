@@ -1,21 +1,34 @@
 #[allow(unused_imports)]
-use std::env;
-#[allow(unused_imports)]
-use std::fs;
+use flate2::{self, read::ZlibDecoder};
+use std::env::args;
+use std::fs::{self, File};
+use std::io::Read;
+use std::path::Path;
 
-fn main() {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    println!("Logs from your program will appear here!");
+fn main() -> anyhow::Result<()> {
+    let args: Vec<String> = args().collect();
 
-    // Uncomment this block to pass the first stage
-    let args: Vec<String> = env::args().collect();
-    if args[1] == "init" {
-        fs::create_dir(".git").unwrap();
-        fs::create_dir(".git/objects").unwrap();
-        fs::create_dir(".git/refs").unwrap();
-        fs::write(".git/HEAD", "ref: refs/heads/master\n").unwrap();
-        println!("Initialized git directory")
-    } else {
-        println!("unknown command: {}", args[1])
-    }
+    match args[1].as_str() {
+        "init" => {
+            fs::create_dir(".git")?;
+            fs::create_dir(".git/objects")?;
+            fs::write(".git/HEAD", "ref: refs/heads/master\n")?;
+            println!("Initialized git directory");
+        }
+        "cat-file" => {
+            let git_object_path = ".git/objects";
+            let mut raw_content = String::new();
+            let (path, file) = &args[2].split_at(2);
+            let file_location = Path::new(&git_object_path).join(path).join(file);
+            if file_location.exists() {
+                ZlibDecoder::new(File::open(file_location)?).read_to_string(&mut raw_content)?;
+                let prettyfy_content = raw_content.split_once("\0").unwrap().1;
+                println!("{}", prettyfy_content.trim())
+            };
+        }
+        _ => {
+            println!("unknown command: {}", args[1])
+        }
+    };
+    Ok(())
 }
