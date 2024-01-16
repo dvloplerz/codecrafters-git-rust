@@ -10,9 +10,10 @@ fn main() -> anyhow::Result<()> {
 
     match args[1].as_str() {
         "init" => {
-            fs::create_dir(".git")?;
-            fs::create_dir(".git/objects")?;
-            fs::write(".git/HEAD", "ref: refs/heads/master\n")?;
+            fs::create_dir(".git")
+                .and_then(|_| fs::create_dir(".git/objects"))
+                .and_then(|_| fs::create_dir(".git/refs"))
+                .and_then(|_| fs::write(".git/HEAD", "ref: refs/heads/master\n"));
             println!("Initialized git directory");
         }
         "cat-file" => {
